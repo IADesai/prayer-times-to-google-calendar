@@ -1,0 +1,4 @@
+requests
+Google
+pandas
+pyinstaller
