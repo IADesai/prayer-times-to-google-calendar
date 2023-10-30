@@ -5,3 +5,4 @@ __pycache__
 dist
 uploader
 .DS_Store
+uploader.spec
