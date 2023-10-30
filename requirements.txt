@@ -2,3 +2,4 @@ requests
 Google
 pandas
 pyinstaller
+tqdm

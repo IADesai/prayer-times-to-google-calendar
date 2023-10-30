@@ -1,5 +1,6 @@
 """This module contains code retrieving prayer times from the API and transferring them onto a google calendar"""
 from quickstart import *
+from tqdm import tqdm
 import requests
 import json
 import os
@@ -56,8 +57,10 @@ if __name__ == '__main__':
     creds = Credentials.from_authorized_user_file(f'{path}/token.json', SCOPES)
 
     prayers = ['fajr', 'dhuhr', 'asr_2', 'magrib', 'isha']
-    for day in prayer_times_json:
+    for day in tqdm(prayer_times_json):
         for prayer in prayer_times_json[day]:
             if prayer in prayers:
                 prayer_time = prayer_times_json[day][prayer]
                 create_calendar_event(day, prayer_time, prayer, creds)
+
+    print("Check your calendar at the month and year you inputted. You will find Hornchurch prayer times there.")
