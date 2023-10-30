@@ -2,7 +2,18 @@
 from quickstart import *
 import requests
 import json
+import os
+import sys
 from datetime import datetime, timedelta
+
+
+def find_file_path() -> str:
+    """Finds the path to the folder when run and returns it"""
+    if getattr(sys, 'frozen', False):
+        application_path = os.path.dirname(sys.executable)
+    elif __file__:
+        application_path = os.path.dirname(__file__)
+    return application_path
 
 
 def get_monthly_prayer_time_data_from_api(year_input: str, month_input: str) -> str:
@@ -35,12 +46,14 @@ def create_calendar_event(date: str, time: str, prayer: str, credential) -> None
 
 if __name__ == '__main__':
 
+    path = find_file_path()
+
     year = input('Please input the year that you want the times for (in digits [e.g.2023]): ')
     month = input('Please input the month that you want the times for (in lowercase [e.g. november]): ')
 
     prayer_times_json = get_monthly_prayer_time_data_from_api(year, month)
 
-    creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    creds = Credentials.from_authorized_user_file(f'{path}/token.json', SCOPES)
 
     prayers = ['fajr', 'dhuhr', 'asr_2', 'magrib', 'isha']
     for day in prayer_times_json:
