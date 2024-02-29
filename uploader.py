@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     creds = Credentials.from_authorized_user_file(f'{path}/token.json', SCOPES)
 
-    prayers = ['fajr', 'dhuhr', 'asr_2', 'magrib', 'isha']
+    prayers = ['fajr', 'sunrise', 'dhuhr', 'asr_2', 'magrib', 'isha']
     for day in tqdm(prayer_times_json):
         for prayer in prayer_times_json[day]:
             if prayer in prayers:
