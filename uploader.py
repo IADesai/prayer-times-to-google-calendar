@@ -52,6 +52,8 @@ if __name__ == '__main__':
     year = input('Please input the year that you want the times for (in digits [e.g.2023]): ')
     month = input('Please input the month that you want the times for (in lowercase [e.g. november]): ')
 
+    months_list = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+
     prayer_times_json = get_monthly_prayer_time_data_from_api(year, month)
 
     creds = Credentials.from_authorized_user_file(f'{path}/token.json', SCOPES)
@@ -63,4 +65,33 @@ if __name__ == '__main__':
                 prayer_time = prayer_times_json[day][prayer]
                 create_calendar_event(day, prayer_time, prayer, creds)
 
+
+                next_day = (datetime.strptime(day, '%Y-%m-%d').date() + timedelta(days=1)).strftime('%Y-%m-%d')
+                if prayer == 'isha':
+                    if next_day in prayer_times_json:
+                        next_fajr = prayer_times_json[next_day]['fajr']
+                    else:
+                        i = 0
+                        for months in months_list:
+                            i += 1
+                            if months == month:
+                                break
+                        next_fajr = get_monthly_prayer_time_data_from_api(year, months_list[i])[next_day]['fajr']
+                    next_fajr = datetime.strptime(next_fajr, '%H:%M')
+                    magrib = datetime.strptime(prayer_times_json[day]['magrib'], '%H:%M')
+                    if next_fajr < magrib:
+                        next_fajr += timedelta(days=1)
+                    time_difference = next_fajr - magrib
+                    midnight = magrib + (time_difference / 2)
+                    first_third = magrib + (time_difference / 3)
+                    if midnight.hour >= 12:
+                        midnight_day = day
+                    else:
+                        midnight_day = next_day
+                    if first_third.hour >= 12:
+                        first_third_day = day
+                    else:
+                        first_third_day = next_day
+                    create_calendar_event(midnight_day, midnight.strftime('%H:%M'), 'midnight', creds)
+                    create_calendar_event(first_third_day, first_third.strftime('%H:%M'), 'first_third', creds)
     print("Check your calendar at the month and year you inputted. You will find Hornchurch prayer times there.")
