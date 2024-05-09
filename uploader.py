@@ -45,18 +45,50 @@ def create_calendar_event(date: str, time: str, prayer: str, credential) -> None
     event = service.events().insert(calendarId='1a4a4046ea518584fe2a3a0dc2dcffc889427489a999182a13214a1c2c5d830c@group.calendar.google.com', body=event).execute()
 
 
+def delete_events(credents):
+    # Specify the date range for events deletion
+    start_date = datetime(2024, 1, 1, 0, 0, 0)
+    end_date = datetime(2025, 1, 4, 0, 0, 0)
+
+    service = build('calendar', 'v3', credentials=credents)
+
+    # Get calendar ID by calendar name
+    calendar_id = '1a4a4046ea518584fe2a3a0dc2dcffc889427489a999182a13214a1c2c5d830c@group.calendar.google.com'
+
+    # Fetch events within the specified date range
+    events_result = service.events().list(
+        calendarId=calendar_id,
+        timeMin=start_date.isoformat() + 'Z',
+        timeMax=end_date.isoformat() + 'Z',
+        singleEvents=True,
+        orderBy='startTime',
+    ).execute()
+
+    # Delete each event within the date range
+    if 'items' in events_result:
+        for event in events_result['items']:
+            event_id = event['id']
+            service.events().delete(calendarId=calendar_id, eventId=event_id).execute()
+            print(f"Event '{event['summary']}' deleted.")
+
+
 if __name__ == '__main__':
 
     path = find_file_path()
 
+    creds = Credentials.from_authorized_user_file(f'{path}/token.json', SCOPES)
+
     year = input('Please input the year that you want the times for (in digits [e.g.2023]): ')
+
+    if year == 'clear':
+        delete_events(creds)
+        exit()
+
     month = input('Please input the month that you want the times for (in lowercase [e.g. november]): ')
 
     months_list = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
 
     prayer_times_json = get_monthly_prayer_time_data_from_api(year, month)
-
-    creds = Credentials.from_authorized_user_file(f'{path}/token.json', SCOPES)
 
     prayers = ['fajr', 'sunrise', 'dhuhr', 'asr_2', 'magrib', 'isha']
     for day in tqdm(prayer_times_json):
