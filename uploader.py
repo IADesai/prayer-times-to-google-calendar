@@ -21,7 +21,7 @@ def get_monthly_prayer_time_data_from_api(year_input: str, month_input: str) -> 
     """Sends request to API to get a response with all prayer times as json"""
     response = requests.get(f'https://www.londonprayertimes.com/api/times/?format=json&key=3d07d979-1145-4d4e-81d0-8fac6e634a2d&year={year_input}&month={month_input}&24hours=true')
     data = json.loads(response.text)
-    return data["times"]
+    return data.get("times")
         
 
 def create_calendar_event(date: str, time: str, prayer: str, credential) -> None:
@@ -102,12 +102,18 @@ if __name__ == '__main__':
                 if prayer == 'isha':
                     if next_day in prayer_times_json:
                         next_fajr = prayer_times_json[next_day]['fajr']
+                    elif month == 'december':
+                        break
                     else:
                         i = 0
                         for months in months_list:
                             i += 1
+                            if i==12:
+                                i=0
+                                break
                             if months == month:
                                 break
+                        year = str(int(year)+1)
                         next_fajr = get_monthly_prayer_time_data_from_api(year, months_list[i])[next_day]['fajr']
                     next_fajr = datetime.strptime(next_fajr, '%H:%M')
                     magrib = datetime.strptime(prayer_times_json[day]['magrib'], '%H:%M')
