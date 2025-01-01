@@ -98,23 +98,29 @@ if __name__ == '__main__':
                 create_calendar_event(day, prayer_time, prayer, creds)
 
 
-                next_day = (datetime.strptime(day, '%Y-%m-%d').date() + timedelta(days=1)).strftime('%Y-%m-%d')
-                if prayer == 'isha':
-                    if next_day in prayer_times_json:
-                        next_fajr = prayer_times_json[next_day]['fajr']
-                    elif month == 'december':
-                        break
+                # After isha prayer, calculate additional times for midnight and first third
+            next_day = (datetime.strptime(day, '%Y-%m-%d').date() + timedelta(days=1)).strftime('%Y-%m-%d')
+            if prayer == 'isha':
+                if next_day in prayer_times_json:
+                    next_fajr = prayer_times_json[next_day].get('fajr')
+                elif month == 'december':
+                    # Handle end of the year case
+                    break
+                else:
+                    # Move to the next month
+                    i = months_list.index(month)
+                    next_month = months_list[(i + 1) % 12]
+                    if next_month == 'january':
+                        year = str(int(year) + 1)
+                    next_month_data = get_monthly_prayer_time_data_from_api(year, next_month)
+                    if next_month_data and next_day in next_month_data:
+                        next_fajr = next_month_data[next_day].get('fajr')
                     else:
-                        i = 0
-                        for months in months_list:
-                            i += 1
-                            if i==12:
-                                i=0
-                                break
-                            if months == month:
-                                break
-                        year = str(int(year)+1)
-                        next_fajr = get_monthly_prayer_time_data_from_api(year, months_list[i])[next_day]['fajr']
+                        print(f"Error: Could not retrieve prayer times for {next_day}.")
+                        continue  # Skip further processing for this case
+
+                # Calculate midnight and first third times
+                if next_fajr:
                     next_fajr = datetime.strptime(next_fajr, '%H:%M')
                     magrib = datetime.strptime(prayer_times_json[day]['magrib'], '%H:%M')
                     if next_fajr < magrib:
@@ -122,14 +128,12 @@ if __name__ == '__main__':
                     time_difference = next_fajr - magrib
                     midnight = magrib + (time_difference / 2)
                     first_third = magrib + (time_difference / 3)
-                    if midnight.hour >= 12:
-                        midnight_day = day
-                    else:
-                        midnight_day = next_day
-                    if first_third.hour >= 12:
-                        first_third_day = day
-                    else:
-                        first_third_day = next_day
+
+                    # Determine correct dates for midnight and first third
+                    midnight_day = day if midnight.hour >= 12 else next_day
+                    first_third_day = day if first_third.hour >= 12 else next_day
+
+                    # Create calendar events
                     create_calendar_event(midnight_day, midnight.strftime('%H:%M'), 'midnight', creds)
                     create_calendar_event(first_third_day, first_third.strftime('%H:%M'), 'first_third', creds)
     print("Check your calendar at the month and year you inputted. You will find Hornchurch prayer times there.")
